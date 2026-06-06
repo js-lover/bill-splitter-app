@@ -1,123 +1,156 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import {
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StatusBar, ScrollView,
+} from 'react-native';
 import { Link } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../src/lib/supabase';
 
 export default function Register() {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function signUp() {
+    if (!fullName.trim() || !email.trim() || !password.trim()) {
+      Alert.alert('Hata', 'Tüm alanları doldurunuz.');
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert('Hata', 'Şifre en az 6 karakter olmalıdır.');
+      return;
+    }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
-      email,
+      email: email.trim(),
       password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
+      options: { data: { full_name: fullName.trim() } },
     });
-
     if (error) {
-      Alert.alert('Hata', error.message);
+      Alert.alert('Kayıt Başarısız', error.message);
     } else {
-      Alert.alert('Başarılı', 'Lütfen e-posta adresinizi doğrulayın!');
+      Alert.alert('Başarılı! 🎉', 'E-posta adresinize doğrulama linki gönderildi. Linke tıkladıktan sonra giriş yapabilirsiniz.');
     }
     setLoading(false);
   }
 
   return (
-    <LinearGradient colors={['#2C5364', '#203A43', '#0F2027']} style={styles.container}>
-      <View style={styles.glassCard}>
-        <Text style={styles.title}>Kayıt Ol</Text>
-        <Text style={styles.subtitle}>Grup masraflarına ortak olun</Text>
+    <LinearGradient colors={['#312E81', '#4338CA', '#6D28D9']} style={styles.bg}>
+      <StatusBar barStyle="light-content" />
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.kav}
+        >
+          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+            <View style={styles.topSection}>
+              <View style={styles.logoCircle}>
+                <Text style={styles.logoText}>₺</Text>
+              </View>
+              <Text style={styles.appName}>Ortak Hesap</Text>
+              <Text style={styles.appTagline}>Hesabınızı oluşturun</Text>
+            </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Ad Soyad"
-          placeholderTextColor="#A0AAB2"
-          value={fullName}
-          onChangeText={setFullName}
-          autoCapitalize="words"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="E-posta Adresi"
-          placeholderTextColor="#A0AAB2"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Şifre"
-          placeholderTextColor="#A0AAB2"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoCapitalize="none"
-        />
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Kayıt Ol</Text>
 
-        <TouchableOpacity style={styles.button} onPress={signUp} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Hesap Oluştur</Text>}
-        </TouchableOpacity>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Ad Soyad</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Adınız ve soyadınız"
+                  placeholderTextColor="#94A3B8"
+                  value={fullName}
+                  onChangeText={setFullName}
+                  autoCapitalize="words"
+                />
+              </View>
 
-        <Link href="/(auth)/login" asChild>
-          <TouchableOpacity style={styles.linkButton}>
-            <Text style={styles.linkText}>Zaten hesabınız var mı? Giriş Yapın</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>E-posta</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="ornek@mail.com"
+                  placeholderTextColor="#94A3B8"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Şifre</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="En az 6 karakter"
+                  placeholderTextColor="#94A3B8"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <TouchableOpacity style={styles.btnWrapper} onPress={signUp} disabled={loading} activeOpacity={0.85}>
+                <LinearGradient colors={['#4F46E5', '#7C3AED']} style={styles.btn}>
+                  {loading
+                    ? <ActivityIndicator color="#FFF" />
+                    : <Text style={styles.btnText}>Hesap Oluştur</Text>
+                  }
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <Link href="/(auth)/login" asChild>
+                <TouchableOpacity style={styles.link}>
+                  <Text style={styles.linkText}>Zaten hesabınız var mı? <Text style={styles.linkBold}>Giriş Yapın</Text></Text>
+                </TouchableOpacity>
+              </Link>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  glassCard: {
-    width: '85%',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 24,
-    padding: 30,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    alignItems: 'center',
+  bg: { flex: 1 },
+  safe: { flex: 1 },
+  kav: { flex: 1 },
+  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 20 },
+  topSection: { alignItems: 'center', marginBottom: 28 },
+  logoCircle: {
+    width: 72, height: 72, borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center', alignItems: 'center',
+    marginBottom: 14, borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
-  title: { fontSize: 32, fontWeight: '800', color: '#FFF', marginBottom: 5 },
-  subtitle: { fontSize: 16, color: '#A0AAB2', marginBottom: 30 },
+  logoText: { color: '#FFF', fontSize: 32, fontWeight: '800' },
+  appName: { color: '#FFF', fontSize: 28, fontWeight: '800' },
+  appTagline: { color: 'rgba(255,255,255,0.6)', fontSize: 14, marginTop: 6 },
+  card: {
+    backgroundColor: '#FFF',
+    borderRadius: 24, padding: 28,
+    shadowColor: '#000', shadowOpacity: 0.15,
+    shadowRadius: 24, shadowOffset: { width: 0, height: 12 },
+  },
+  cardTitle: { fontSize: 22, fontWeight: '800', color: '#1E293B', marginBottom: 24 },
+  inputGroup: { marginBottom: 16 },
+  inputLabel: { fontSize: 13, fontWeight: '600', color: '#64748B', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
   input: {
-    width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 16,
-    color: '#FFF',
-    fontSize: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#F8FAFF', borderWidth: 1.5, borderColor: '#E2E8F0',
+    borderRadius: 12, padding: 14, fontSize: 15, color: '#1E293B',
   },
-  button: {
-    width: '100%',
-    backgroundColor: '#4FACFE',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 10,
-    shadowColor: '#4FACFE',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-  },
-  buttonText: { color: '#0F2027', fontSize: 16, fontWeight: '700' },
-  linkButton: { marginTop: 20 },
-  linkText: { color: '#4FACFE', fontSize: 14, fontWeight: '600' },
+  btnWrapper: { marginTop: 8, borderRadius: 14, overflow: 'hidden' },
+  btn: { padding: 16, alignItems: 'center' },
+  btnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  link: { marginTop: 20, alignItems: 'center' },
+  linkText: { color: '#64748B', fontSize: 14 },
+  linkBold: { color: '#4F46E5', fontWeight: '700' },
 });
